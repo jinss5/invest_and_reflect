@@ -24,9 +24,13 @@ Individual investors lack the structured evaluation systems that exist in school
 3. **Repeating good decisions** — identify common patterns in successful judgments; generalize effective thinking frameworks and checklists into reusable investment principles
 4. **Improving through reflection** — revisit the same entry at 1 week, 3 months, and 1 year; compare how judgment quality looks different over time; separate outcome quality from process quality; surface recurring mistakes and strengths
 
+### Deployment
+
+This service is intended for **public deployment** with **multiple concurrent users**. It is not a local-only tool — it will be publicly accessible on the internet. Design and implement accordingly: assume untrusted input, enforce proper auth and per-user data isolation, and treat security as a hard requirement throughout.
+
 ### Auth
 
-Google OAuth (planned, not yet implemented)
+Google OAuth via Supabase — implemented. Users sign in at `/login`, are redirected through `/auth/callback`, and land on `/dashboard`. Auth state is managed client-side via `AuthContext`. There is no middleware-level route protection yet; the dashboard page guards itself by checking `useAuth()` and rendering `null` if the user is not authenticated.
 
 ## Commands
 
@@ -40,18 +44,26 @@ There are no tests configured yet.
 
 ## Stack
 
-- **Next.js 16.2.2** — App Router only. No Pages Router.
+- **Next.js 15** — App Router only. No Pages Router.
 - **React 19**
 - **TypeScript** (strict mode, path alias `@/*` maps to repo root)
-- **Tailwind CSS v4** — configured via `@tailwindcss/postcss`. No `tailwind.config.*` file; all customization goes through CSS or inline classes. Global styles live in `app/globals.css` (currently just `@import "tailwindcss"`).
+- **Tailwind CSS v4** — configured via `@tailwindcss/postcss`. No `tailwind.config.*` file; all customization goes through CSS or inline classes. Global styles live in `app/globals.css`.
+- **Supabase** — auth (Google OAuth via `@supabase/ssr`). Browser client at `lib/supabase/client.ts`, server client at `lib/supabase/server.ts`. No database queries yet — the journal form is UI-only with no persistence.
 
 ## Project structure
 
 ```
 app/
-  layout.tsx                    # root layout — html/body wrapper, metadata
+  layout.tsx                    # root layout — html/body wrapper, AuthProvider, metadata
   page.tsx                      # landing page (/) with link to dashboard
   globals.css                   # Tailwind import
+  login/
+    page.tsx                    # login page — Google OAuth sign-in button
+  auth/
+    callback/
+      route.ts                  # OAuth callback handler — exchanges code for session
+  context/
+    AuthContext.tsx             # AuthProvider + useAuth hook (user, loading, signOut)
   types/
     journal.ts                  # shared types: JournalEntry, ActionDetail, NewsItem, etc.
   components/
@@ -59,17 +71,13 @@ app/
     FearGreedSlider.tsx         # range slider 0-100 with zone labels
     EmotionTags.tsx             # toggleable emotion pills + free-text input
   dashboard/
-    page.tsx                    # dashboard page (/dashboard)
+    page.tsx                    # dashboard page (/dashboard) — auth-guarded, renders nav + form
     JournalEntryForm.tsx        # journal entry form (client component, UI-only, no persistence)
+lib/
+  supabase/
+    client.ts                   # browser Supabase client (createBrowserClient)
+    server.ts                   # server Supabase client (createServerClient + cookies)
+    proxy.ts                    # (unused/TBD)
 ```
 
 All routes are added under `app/` following Next.js file-system routing conventions.
-
-### Journal entry form sections
-
-The dashboard renders a scrollable form with four card sections:
-
-1. **Basic Info** — date picker, one-line summary
-2. **News** — dynamic add/remove news items (headline + market reaction), overall interpretation textarea
-3. **Market** — sentiment segmented control (bullish/neutral/bearish), Fear & Greed slider (0-100)
-4. **Actions** — dynamic add/remove action items, each with: type dropdown (buy/sell/hold), ticker, shares, price/unit, confidence level, decision basis; followed by shared reasoning textarea and emotion tags
