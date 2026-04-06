@@ -28,17 +28,17 @@ export default function Page() {
       {/* Hero content */}
       <div className="relative z-10 flex flex-col items-center text-center px-6 max-w-2xl">
         <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-[#0d1117] leading-tight tracking-tight">
-          Background lights are
-          <br />
-          cool you know.
+          Invest and Reflect
         </h1>
 
         <p className="mt-5 text-base sm:text-lg font-normal text-[#6b7280] leading-relaxed">
-          And this, is chemical burn.
+          Track decisions | Build conviction | Improve outcomes
+          <br/>
+          Better decisions compound
         </p>
 
         <button className="mt-8 px-5 py-2 rounded-full bg-[#0d1117] text-white text-sm font-medium transition-opacity duration-150 hover:opacity-75">
-          Debug now
+          Start
         </button>
       </div>
     </main>
