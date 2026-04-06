@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Page() {
   return (
     <main className="relative min-h-screen w-full overflow-hidden bg-[#f4f4f5] flex items-center justify-center">
@@ -37,9 +39,12 @@ export default function Page() {
           Better decisions compound
         </p>
 
-        <button className="mt-8 px-5 py-2 rounded-full bg-[#0d1117] text-white text-sm font-medium transition-opacity duration-150 hover:opacity-75">
+        <Link
+          href="/dashboard"
+          className="mt-8 px-5 py-2 rounded-full bg-[#0d1117] text-white text-sm font-medium transition-opacity duration-150 hover:opacity-75"
+        >
           Start
-        </button>
+        </Link>
       </div>
     </main>
   );
