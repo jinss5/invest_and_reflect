@@ -5,6 +5,7 @@ import type { JournalEntry, ActionDetail, Emotion, NewsItem } from "@/app/types/
 import SegmentedControl from "@/app/components/SegmentedControl";
 import FearGreedSlider from "@/app/components/FearGreedSlider";
 import EmotionTags from "@/app/components/EmotionTags";
+import { useDate } from "@/app/context/DateContext";
 
 const INPUT_CLASS =
   "w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-[#0d1117] placeholder:text-[#6b7280]/50 focus:outline-none focus:ring-2 focus:ring-[#0d1117]/20 focus:border-[#0d1117] transition-colors";
@@ -40,9 +41,13 @@ const initialEntry: JournalEntry = {
 };
 
 export default function JournalEntryForm() {
+  const { selectedDate, setSelectedDate } = useDate();
   const [entry, setEntry] = useState<JournalEntry>(initialEntry);
 
   function updateField<K extends keyof JournalEntry>(key: K, value: JournalEntry[K]) {
+    if (key === "date" && typeof value === "string") {
+      setSelectedDate(value);
+    }
     setEntry((prev) => ({ ...prev, [key]: value }));
   }
 
@@ -115,7 +120,7 @@ export default function JournalEntryForm() {
           <label className="block text-sm font-medium text-[#0d1117] mb-1">Date</label>
           <input
             type="date"
-            value={entry.date}
+            value={selectedDate}
             onChange={(e) => updateField("date", e.target.value)}
             className={INPUT_CLASS}
           />
