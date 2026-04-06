@@ -20,9 +20,7 @@ export default function SegmentedControl<T extends string>({
 }: SegmentedControlProps<T>) {
   return (
     <fieldset>
-      <legend className="text-sm font-medium text-[#0d1117] mb-2">
-        {label}
-      </legend>
+      <legend className="text-sm font-medium text-[#0d1117] mb-2">{label}</legend>
       <div className="inline-flex rounded-full border border-gray-200 bg-white p-0.5">
         {options.map((option) => (
           <button

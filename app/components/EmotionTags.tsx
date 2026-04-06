@@ -25,9 +25,7 @@ export default function EmotionTags({
 }: EmotionTagsProps) {
   return (
     <fieldset>
-      <legend className="text-sm font-medium text-[#0d1117] mb-2">
-        Emotions at the Time
-      </legend>
+      <legend className="text-sm font-medium text-[#0d1117] mb-2">Emotions at the Time</legend>
       <div className="flex flex-wrap gap-2">
         {EMOTIONS.map((emotion) => {
           const isSelected = selected.includes(emotion.value);

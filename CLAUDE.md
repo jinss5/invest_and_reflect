@@ -11,6 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Problem
 
 Individual investors lack the structured evaluation systems that exist in schools or workplaces. This leads to recurring issues:
+
 - Mistaking lucky short-term gains for skill
 - Abandoning sound strategies after temporary losses
 - Repeating bad processes that happened to produce good results

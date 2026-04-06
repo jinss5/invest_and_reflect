@@ -13,17 +13,12 @@ function getZone(value: number): { label: string; color: string } {
   return { label: "Extreme Greed", color: "text-green-600" };
 }
 
-export default function FearGreedSlider({
-  value,
-  onChange,
-}: FearGreedSliderProps) {
+export default function FearGreedSlider({ value, onChange }: FearGreedSliderProps) {
   const zone = getZone(value);
 
   return (
     <fieldset>
-      <legend className="text-sm font-medium text-[#0d1117] mb-2">
-        Fear & Greed Index
-      </legend>
+      <legend className="text-sm font-medium text-[#0d1117] mb-2">Fear & Greed Index</legend>
       <input
         type="range"
         min={0}

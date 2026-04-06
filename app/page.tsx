@@ -35,7 +35,7 @@ export default function Page() {
 
         <p className="mt-5 text-base sm:text-lg font-normal text-[#6b7280] leading-relaxed">
           Track decisions | Build conviction | Improve outcomes
-          <br/>
+          <br />
           Better decisions compound
         </p>
 

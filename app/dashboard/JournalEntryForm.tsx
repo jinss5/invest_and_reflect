@@ -1,12 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type {
-  JournalEntry,
-  ActionDetail,
-  Emotion,
-  NewsItem,
-} from "@/app/types/journal";
+import type { JournalEntry, ActionDetail, Emotion, NewsItem } from "@/app/types/journal";
 import SegmentedControl from "@/app/components/SegmentedControl";
 import FearGreedSlider from "@/app/components/FearGreedSlider";
 import EmotionTags from "@/app/components/EmotionTags";
@@ -19,7 +14,15 @@ function createNewsItem(): NewsItem {
 }
 
 function createActionDetail(): ActionDetail {
-  return { id: crypto.randomUUID(), type: "buy", ticker: "", shares: "", pricePerUnit: "", confidenceLevel: "medium", decisionBasis: "mixed" };
+  return {
+    id: crypto.randomUUID(),
+    type: "buy",
+    ticker: "",
+    shares: "",
+    pricePerUnit: "",
+    confidenceLevel: "medium",
+    decisionBasis: "mixed",
+  };
 }
 
 const initialEntry: JournalEntry = {
@@ -38,10 +41,7 @@ const initialEntry: JournalEntry = {
 export default function JournalEntryForm() {
   const [entry, setEntry] = useState<JournalEntry>(initialEntry);
 
-  function updateField<K extends keyof JournalEntry>(
-    key: K,
-    value: JournalEntry[K],
-  ) {
+  function updateField<K extends keyof JournalEntry>(key: K, value: JournalEntry[K]) {
     setEntry((prev) => ({ ...prev, [key]: value }));
   }
 
@@ -64,7 +64,7 @@ export default function JournalEntryForm() {
     setEntry((prev) => ({
       ...prev,
       newsItems: prev.newsItems.map((item) =>
-        item.id === id ? { ...item, [field]: value } : item,
+        item.id === id ? { ...item, [field]: value } : item
       ),
     }));
   }
@@ -87,13 +87,11 @@ export default function JournalEntryForm() {
   function updateActionDetail(
     id: string,
     field: "type" | "ticker" | "shares" | "pricePerUnit" | "confidenceLevel" | "decisionBasis",
-    value: string,
+    value: string
   ) {
     setEntry((prev) => ({
       ...prev,
-      actionDetails: prev.actionDetails.map((d) =>
-        d.id === id ? { ...d, [field]: value } : d,
-      ),
+      actionDetails: prev.actionDetails.map((d) => (d.id === id ? { ...d, [field]: value } : d)),
     }));
   }
 
@@ -108,17 +106,12 @@ export default function JournalEntryForm() {
   }
 
   return (
-    <form
-      onSubmit={(e) => e.preventDefault()}
-      className="max-w-2xl mx-auto px-6 py-8 space-y-6"
-    >
+    <form onSubmit={(e) => e.preventDefault()} className="max-w-2xl mx-auto px-6 py-8 space-y-6">
       {/* ===== Basic Info ===== */}
       <section className="bg-white rounded-2xl p-6 shadow-sm space-y-4">
         <h2 className="text-lg font-semibold text-[#0d1117]">Basic Info</h2>
         <div>
-          <label className="block text-sm font-medium text-[#0d1117] mb-1">
-            Date
-          </label>
+          <label className="block text-sm font-medium text-[#0d1117] mb-1">Date</label>
           <input
             type="date"
             value={entry.date}
@@ -127,9 +120,7 @@ export default function JournalEntryForm() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-[#0d1117] mb-1">
-            One-Line Summary
-          </label>
+          <label className="block text-sm font-medium text-[#0d1117] mb-1">One-Line Summary</label>
           <input
             type="text"
             value={entry.summary}
@@ -145,14 +136,9 @@ export default function JournalEntryForm() {
         <h2 className="text-lg font-semibold text-[#0d1117]">News</h2>
 
         {entry.newsItems.map((item, index) => (
-          <div
-            key={item.id}
-            className="space-y-3 border border-gray-100 rounded-xl p-4"
-          >
+          <div key={item.id} className="space-y-3 border border-gray-100 rounded-xl p-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-[#6b7280]">
-                News #{index + 1}
-              </span>
+              <span className="text-xs font-medium text-[#6b7280]">News #{index + 1}</span>
               {entry.newsItems.length > 1 && (
                 <button
                   type="button"
@@ -166,22 +152,14 @@ export default function JournalEntryForm() {
             <input
               type="text"
               value={item.keyNews}
-              onChange={(e) =>
-                updateNewsItem(item.id, "keyNews", e.target.value)
-              }
+              onChange={(e) => updateNewsItem(item.id, "keyNews", e.target.value)}
               placeholder="Key news headline"
               className={INPUT_CLASS}
             />
             <input
               type="text"
               value={item.marketReactionSummary}
-              onChange={(e) =>
-                updateNewsItem(
-                  item.id,
-                  "marketReactionSummary",
-                  e.target.value,
-                )
-              }
+              onChange={(e) => updateNewsItem(item.id, "marketReactionSummary", e.target.value)}
               placeholder="How did the market react?"
               className={INPUT_CLASS}
             />
@@ -197,9 +175,7 @@ export default function JournalEntryForm() {
         </button>
 
         <div>
-          <label className="block text-sm font-medium text-[#0d1117] mb-1">
-            My Interpretation
-          </label>
+          <label className="block text-sm font-medium text-[#0d1117] mb-1">My Interpretation</label>
           <textarea
             value={entry.myInterpretation}
             onChange={(e) => updateField("myInterpretation", e.target.value)}
@@ -217,9 +193,9 @@ export default function JournalEntryForm() {
         <SegmentedControl
           label="Market Sentiment"
           options={[
-            { value: "bullish" as const, label: "Bullish" },
-            { value: "neutral" as const, label: "Neutral" },
             { value: "bearish" as const, label: "Bearish" },
+            { value: "neutral" as const, label: "Neutral" },
+            { value: "bullish" as const, label: "Bullish" },
           ]}
           value={entry.marketSentiment}
           onChange={(v) => updateField("marketSentiment", v)}
@@ -236,14 +212,9 @@ export default function JournalEntryForm() {
         <h2 className="text-lg font-semibold text-[#0d1117]">Actions</h2>
 
         {entry.actionDetails.map((detail, index) => (
-          <div
-            key={detail.id}
-            className="space-y-3 border border-gray-100 rounded-xl p-4"
-          >
+          <div key={detail.id} className="space-y-3 border border-gray-100 rounded-xl p-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-[#6b7280]">
-                Action #{index + 1}
-              </span>
+              <span className="text-xs font-medium text-[#6b7280]">Action #{index + 1}</span>
               {entry.actionDetails.length > 1 && (
                 <button
                   type="button"
@@ -256,9 +227,7 @@ export default function JournalEntryForm() {
             </div>
             <select
               value={detail.type}
-              onChange={(e) =>
-                updateActionDetail(detail.id, "type", e.target.value)
-              }
+              onChange={(e) => updateActionDetail(detail.id, "type", e.target.value)}
               className={INPUT_CLASS}
             >
               <option value="buy">Buy</option>
@@ -267,47 +236,31 @@ export default function JournalEntryForm() {
             </select>
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="block text-xs text-[#6b7280] mb-1">
-                  Ticker
-                </label>
+                <label className="block text-xs text-[#6b7280] mb-1">Ticker</label>
                 <input
                   type="text"
                   value={detail.ticker}
-                  onChange={(e) =>
-                    updateActionDetail(detail.id, "ticker", e.target.value)
-                  }
+                  onChange={(e) => updateActionDetail(detail.id, "ticker", e.target.value)}
                   placeholder="e.g., AAPL"
                   className={INPUT_CLASS}
                 />
               </div>
               <div>
-                <label className="block text-xs text-[#6b7280] mb-1">
-                  Shares
-                </label>
+                <label className="block text-xs text-[#6b7280] mb-1">Shares</label>
                 <input
                   type="text"
                   value={detail.shares}
-                  onChange={(e) =>
-                    updateActionDetail(detail.id, "shares", e.target.value)
-                  }
+                  onChange={(e) => updateActionDetail(detail.id, "shares", e.target.value)}
                   placeholder="0"
                   className={INPUT_CLASS}
                 />
               </div>
               <div>
-                <label className="block text-xs text-[#6b7280] mb-1">
-                  Price / Unit
-                </label>
+                <label className="block text-xs text-[#6b7280] mb-1">Price / Unit</label>
                 <input
                   type="text"
                   value={detail.pricePerUnit}
-                  onChange={(e) =>
-                    updateActionDetail(
-                      detail.id,
-                      "pricePerUnit",
-                      e.target.value,
-                    )
-                  }
+                  onChange={(e) => updateActionDetail(detail.id, "pricePerUnit", e.target.value)}
                   placeholder="0.00"
                   className={INPUT_CLASS}
                 />
@@ -321,9 +274,7 @@ export default function JournalEntryForm() {
                 { value: "high" as const, label: "High" },
               ]}
               value={detail.confidenceLevel}
-              onChange={(v) =>
-                updateActionDetail(detail.id, "confidenceLevel", v)
-              }
+              onChange={(v) => updateActionDetail(detail.id, "confidenceLevel", v)}
             />
             <SegmentedControl
               label="Decision Basis"
@@ -333,9 +284,7 @@ export default function JournalEntryForm() {
                 { value: "mixed" as const, label: "Mixed" },
               ]}
               value={detail.decisionBasis}
-              onChange={(v) =>
-                updateActionDetail(detail.id, "decisionBasis", v)
-              }
+              onChange={(v) => updateActionDetail(detail.id, "decisionBasis", v)}
             />
           </div>
         ))}
@@ -369,7 +318,6 @@ export default function JournalEntryForm() {
           freeText={entry.emotionFreeText}
           onFreeTextChange={(v) => updateField("emotionFreeText", v)}
         />
-
       </section>
 
       {/* ===== Submit ===== */}

@@ -2,12 +2,12 @@ Stage all changes and create a git commit following this project's commit messag
 
 ## Commit prefix rules
 
-| Prefix | When to use |
-|--------|-------------|
-| `feat:` | new feature |
-| `fix:` | bug fix |
+| Prefix      | When to use                         |
+| ----------- | ----------------------------------- |
+| `feat:`     | new feature                         |
+| `fix:`      | bug fix                             |
 | `refactor:` | code change with no behavior change |
-| `chore:` | maintenance / tooling |
+| `chore:`    | maintenance / tooling               |
 
 ## Steps
 
