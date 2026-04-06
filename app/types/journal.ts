@@ -29,6 +29,7 @@ export interface JournalEntry {
 
   marketSentiment: MarketSentiment;
   fearGreedIndex: number;
+  marketNotes: string;
 
   actionDetails: ActionDetail[];
   reasoning: string;

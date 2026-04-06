@@ -32,6 +32,7 @@ const initialEntry: JournalEntry = {
   myInterpretation: "",
   marketSentiment: "neutral",
   fearGreedIndex: 50,
+  marketNotes: "",
   actionDetails: [createActionDetail()],
   reasoning: "",
   emotions: [],
@@ -205,6 +206,17 @@ export default function JournalEntryForm() {
           value={entry.fearGreedIndex}
           onChange={(v) => updateField("fearGreedIndex", v)}
         />
+
+        <div>
+          <label className="block text-sm font-medium text-[#0d1117] mb-1">Market Notes</label>
+          <textarea
+            value={entry.marketNotes}
+            onChange={(e) => updateField("marketNotes", e.target.value)}
+            placeholder="Stock movements, price changes, portfolio observations…"
+            rows={3}
+            className={INPUT_CLASS}
+          />
+        </div>
       </section>
 
       {/* ===== Actions ===== */}
