@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { JournalEntry, ActionDetail, NewsItem } from "@/app/types/journal";
 import SegmentedControl from "@/app/components/SegmentedControl";
 import FearGreedSlider from "@/app/components/FearGreedSlider";
@@ -27,24 +27,88 @@ function createActionDetail(): ActionDetail {
   };
 }
 
-const initialEntry: JournalEntry = {
-  date: new Date().toISOString().split("T")[0],
-  summary: "",
-  newsItems: [createNewsItem()],
-  myInterpretation: "",
-  marketSentiment: "neutral",
-  fearGreedIndex: 50,
-  marketNotes: "",
-  actionDetails: [createActionDetail()],
-  reasoning: "",
-};
+function blankEntry(date: string): JournalEntry {
+  return {
+    date,
+    summary: "",
+    newsItems: [createNewsItem()],
+    myInterpretation: "",
+    marketSentiment: "neutral",
+    fearGreedIndex: 50,
+    marketNotes: "",
+    actionDetails: [createActionDetail()],
+    reasoning: "",
+  };
+}
 
 export default function JournalEntryForm() {
   const { selectedDate, setSelectedDate } = useDate();
   const { user } = useAuth();
-  const [entry, setEntry] = useState<JournalEntry>(initialEntry);
+  const [entry, setEntry] = useState<JournalEntry>(() =>
+    blankEntry(new Date().toISOString().split("T")[0])
+  );
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved" | "error">("idle");
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchEntry = async () => {
+      setLoading(true);
+      const supabase = createClient();
+
+      const { data: je } = await supabase
+        .from("journal_entries")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("entry_date", selectedDate)
+        .single();
+
+      if (!je) {
+        setEntry(blankEntry(selectedDate));
+        setLoading(false);
+        return;
+      }
+
+      const [{ data: newsRows }, { data: actionRows }] = await Promise.all([
+        supabase.from("entry_news_items").select("*").eq("entry_id", je.id).order("sort_order"),
+        supabase.from("entry_actions").select("*").eq("entry_id", je.id).order("sort_order"),
+      ]);
+
+      setEntry({
+        date: je.entry_date,
+        summary: je.summary ?? "",
+        myInterpretation: je.my_interpretation ?? "",
+        marketSentiment: je.market_sentiment ?? "neutral",
+        fearGreedIndex: je.fear_greed_index ?? 50,
+        marketNotes: je.market_notes ?? "",
+        reasoning: je.reasoning ?? "",
+        newsItems: newsRows?.length
+          ? newsRows.map((n) => ({
+              id: crypto.randomUUID(),
+              keyNews: n.key_news ?? "",
+              marketReactionSummary: n.market_reaction_summary ?? "",
+            }))
+          : [createNewsItem()],
+        actionDetails: actionRows?.length
+          ? actionRows.map((a) => ({
+              id: crypto.randomUUID(),
+              type: a.action_type,
+              ticker: a.ticker ?? "",
+              shares: a.shares?.toString() ?? "",
+              pricePerUnit: a.price_per_unit?.toString() ?? "",
+              confidenceLevel: a.confidence_level ?? "medium",
+              decisionBasis: a.decision_basis ?? "mixed",
+            }))
+          : [createActionDetail()],
+      });
+
+      setLoading(false);
+    };
+
+    fetchEntry();
+  }, [selectedDate, user]);
 
   function updateField<K extends keyof JournalEntry>(key: K, value: JournalEntry[K]) {
     if (key === "date" && typeof value === "string") {
@@ -409,7 +473,7 @@ export default function JournalEntryForm() {
         <button
           type="button"
           onClick={handleSave}
-          disabled={saving}
+          disabled={saving || loading}
           className="px-6 py-2.5 rounded-full bg-[#0d1117] text-white text-sm font-medium transition-opacity hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {saving ? "Saving…" : "Save Entry"}

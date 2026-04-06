@@ -4,6 +4,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 @AGENTS.md
 
+## Database safety rules
+
+**NEVER execute any SQL that deletes or destroys data.** This includes, but is not limited to:
+
+- `DELETE FROM ...`
+- `DROP TABLE ...`
+- `DROP SCHEMA ...`
+- `TRUNCATE ...`
+- `DROP DATABASE ...`
+
+If a task seems to require data deletion, stop and ask the user to run the command themselves.
+
 ## Project
 
 **Investment Journal** is a web application for individual investors to systematically record their investment decisions, emotions, market interpretations, actions, and retrospective evaluations over time.
@@ -111,7 +123,7 @@ All routes are added under `app/` following Next.js file-system routing conventi
 | `created_at`        | timestamptz |                                       |
 | `updated_at`        | timestamptz |                                       |
 
-Unique constraint: `(user_id, entry_date)` — one entry per user per day.
+Unique constraint: `journal_entries_user_id_entry_date_unique` on `(user_id, entry_date)` — one entry per user per day.
 
 ### `public.entry_news_items`
 
