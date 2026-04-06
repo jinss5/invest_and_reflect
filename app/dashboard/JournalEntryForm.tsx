@@ -5,6 +5,8 @@ import type { JournalEntry, ActionDetail, NewsItem } from "@/app/types/journal";
 import SegmentedControl from "@/app/components/SegmentedControl";
 import FearGreedSlider from "@/app/components/FearGreedSlider";
 import { useDate } from "@/app/context/DateContext";
+import { useAuth } from "@/app/context/AuthContext";
+import { createClient } from "@/lib/supabase/client";
 
 const INPUT_CLASS =
   "w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-[#0d1117] placeholder:text-[#6b7280]/50 focus:outline-none focus:ring-2 focus:ring-[#0d1117]/20 focus:border-[#0d1117] transition-colors";
@@ -39,7 +41,10 @@ const initialEntry: JournalEntry = {
 
 export default function JournalEntryForm() {
   const { selectedDate, setSelectedDate } = useDate();
+  const { user } = useAuth();
   const [entry, setEntry] = useState<JournalEntry>(initialEntry);
+  const [saving, setSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saved" | "error">("idle");
 
   function updateField<K extends keyof JournalEntry>(key: K, value: JournalEntry[K]) {
     if (key === "date" && typeof value === "string") {
@@ -96,6 +101,87 @@ export default function JournalEntryForm() {
       ...prev,
       actionDetails: prev.actionDetails.map((d) => (d.id === id ? { ...d, [field]: value } : d)),
     }));
+  }
+
+  async function handleSave() {
+    if (!user) return;
+
+    setSaving(true);
+    setSaveStatus("idle");
+
+    try {
+      const supabase = createClient();
+
+      // Ensure user exists in public.users
+      await supabase.from("users").upsert({ id: user.id, email: user.email }, { onConflict: "id" });
+
+      // Upsert journal entry (unique on user_id + entry_date)
+      const { data: entryRow, error: entryError } = await supabase
+        .from("journal_entries")
+        .upsert(
+          {
+            user_id: user.id,
+            entry_date: selectedDate,
+            summary: entry.summary,
+            my_interpretation: entry.myInterpretation,
+            market_sentiment: entry.marketSentiment,
+            fear_greed_index: entry.fearGreedIndex,
+            market_notes: entry.marketNotes,
+            reasoning: entry.reasoning,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id,entry_date" }
+        )
+        .select("id")
+        .single();
+
+      if (entryError) throw entryError;
+
+      const entryId = entryRow.id;
+
+      // Replace news items: delete old, insert new
+      await supabase.from("entry_news_items").delete().eq("entry_id", entryId);
+
+      if (entry.newsItems.length > 0) {
+        const { error: newsError } = await supabase.from("entry_news_items").insert(
+          entry.newsItems.map((item, i) => ({
+            entry_id: entryId,
+            key_news: item.keyNews,
+            market_reaction_summary: item.marketReactionSummary,
+            sort_order: i,
+          }))
+        );
+        if (newsError) throw newsError;
+      }
+
+      // Replace actions: delete old, insert new
+      await supabase.from("entry_actions").delete().eq("entry_id", entryId);
+
+      if (entry.actionDetails.length > 0) {
+        const { error: actionsError } = await supabase.from("entry_actions").insert(
+          entry.actionDetails.map((d, i) => ({
+            entry_id: entryId,
+            action_type: d.type,
+            ticker: d.ticker,
+            shares: d.shares ? parseFloat(d.shares) : null,
+            price_per_unit: d.pricePerUnit ? parseFloat(d.pricePerUnit) : null,
+            confidence_level: d.confidenceLevel,
+            decision_basis: d.decisionBasis,
+            sort_order: i,
+          }))
+        );
+        if (actionsError) throw actionsError;
+      }
+
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 2000);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : JSON.stringify(err);
+      console.error("Save failed:", msg);
+      setSaveStatus("error");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -317,13 +403,16 @@ export default function JournalEntryForm() {
       </section>
 
       {/* ===== Submit ===== */}
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-3 items-center">
+        {saveStatus === "saved" && <span className="text-sm text-green-600">Saved!</span>}
+        {saveStatus === "error" && <span className="text-sm text-red-500">Failed to save</span>}
         <button
           type="button"
-          disabled
-          className="px-6 py-2.5 rounded-full bg-[#0d1117] text-white text-sm font-medium opacity-50 cursor-not-allowed"
+          onClick={handleSave}
+          disabled={saving}
+          className="px-6 py-2.5 rounded-full bg-[#0d1117] text-white text-sm font-medium transition-opacity hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Save Entry
+          {saving ? "Saving…" : "Save Entry"}
         </button>
       </div>
     </form>
