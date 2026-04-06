@@ -50,6 +50,8 @@ export default function JournalEntryForm() {
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved" | "error">("idle");
   const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteStatus, setDeleteStatus] = useState<"idle" | "deleted" | "error">("idle");
 
   useEffect(() => {
     if (!user) return;
@@ -245,6 +247,41 @@ export default function JournalEntryForm() {
       setSaveStatus("error");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!user) return;
+    if (!confirm("Delete this entry? This cannot be undone.")) return;
+
+    setDeleting(true);
+    setDeleteStatus("idle");
+
+    try {
+      const supabase = createClient();
+
+      const { data: je } = await supabase
+        .from("journal_entries")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("entry_date", selectedDate)
+        .single();
+
+      if (je) {
+        await supabase.from("entry_news_items").delete().eq("entry_id", je.id);
+        await supabase.from("entry_actions").delete().eq("entry_id", je.id);
+        await supabase.from("journal_entries").delete().eq("id", je.id);
+      }
+
+      setEntry(blankEntry(selectedDate));
+      setDeleteStatus("deleted");
+      setTimeout(() => setDeleteStatus("idle"), 2000);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : JSON.stringify(err);
+      console.error("Delete failed:", msg);
+      setDeleteStatus("error");
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -467,17 +504,33 @@ export default function JournalEntryForm() {
       </section>
 
       {/* ===== Submit ===== */}
-      <div className="flex justify-end gap-3 items-center">
-        {saveStatus === "saved" && <span className="text-sm text-green-600">Saved!</span>}
-        {saveStatus === "error" && <span className="text-sm text-red-500">Failed to save</span>}
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={saving || loading}
-          className="px-6 py-2.5 rounded-full bg-[#0d1117] text-white text-sm font-medium transition-opacity hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {saving ? "Saving…" : "Save Entry"}
-        </button>
+      <div className="flex justify-between items-center">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleting || saving || loading}
+            className="px-6 py-2.5 rounded-full border border-red-300 text-red-500 text-sm font-medium transition-colors hover:bg-red-50 hover:border-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {deleting ? "Deleting…" : "Delete"}
+          </button>
+          {deleteStatus === "deleted" && <span className="text-sm text-green-600">Deleted!</span>}
+          {deleteStatus === "error" && (
+            <span className="text-sm text-red-500">Failed to delete</span>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          {saveStatus === "saved" && <span className="text-sm text-green-600">Saved!</span>}
+          {saveStatus === "error" && <span className="text-sm text-red-500">Failed to save</span>}
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving || loading}
+            className="px-6 py-2.5 rounded-full bg-[#0d1117] text-white text-sm font-medium transition-opacity hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {saving ? "Saving…" : "Save"}
+          </button>
+        </div>
       </div>
     </form>
   );
