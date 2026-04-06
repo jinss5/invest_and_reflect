@@ -8,7 +8,6 @@ export type MarketSentiment = "bullish" | "bearish" | "neutral";
 export type ConfidenceLevel = "low" | "medium" | "high";
 export type DecisionBasis = "logic" | "intuition" | "mixed";
 export type ActionType = "buy" | "sell" | "hold";
-export type Emotion = "fomo" | "anxiety" | "calm" | "excitement" | "regret";
 
 export interface ActionDetail {
   id: string;
@@ -33,6 +32,4 @@ export interface JournalEntry {
 
   actionDetails: ActionDetail[];
   reasoning: string;
-  emotions: Emotion[];
-  emotionFreeText: string;
 }

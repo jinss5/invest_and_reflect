@@ -69,7 +69,6 @@ app/
   components/
     SegmentedControl.tsx        # generic pill-style toggle (Market Sentiment, Confidence, Decision Basis)
     FearGreedSlider.tsx         # range slider 0-100 with zone labels
-    EmotionTags.tsx             # toggleable emotion pills + free-text input
   dashboard/
     page.tsx                    # dashboard page (/dashboard) — auth-guarded, renders nav + form
     JournalEntryForm.tsx        # journal entry form (client component, UI-only, no persistence)

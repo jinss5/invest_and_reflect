@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import type { JournalEntry, ActionDetail, Emotion, NewsItem } from "@/app/types/journal";
+import type { JournalEntry, ActionDetail, NewsItem } from "@/app/types/journal";
 import SegmentedControl from "@/app/components/SegmentedControl";
 import FearGreedSlider from "@/app/components/FearGreedSlider";
-import EmotionTags from "@/app/components/EmotionTags";
 import { useDate } from "@/app/context/DateContext";
 
 const INPUT_CLASS =
@@ -36,8 +35,6 @@ const initialEntry: JournalEntry = {
   marketNotes: "",
   actionDetails: [createActionDetail()],
   reasoning: "",
-  emotions: [],
-  emotionFreeText: "",
 };
 
 export default function JournalEntryForm() {
@@ -98,16 +95,6 @@ export default function JournalEntryForm() {
     setEntry((prev) => ({
       ...prev,
       actionDetails: prev.actionDetails.map((d) => (d.id === id ? { ...d, [field]: value } : d)),
-    }));
-  }
-
-  // --- Emotion helper ---
-  function toggleEmotion(emotion: Emotion) {
-    setEntry((prev) => ({
-      ...prev,
-      emotions: prev.emotions.includes(emotion)
-        ? prev.emotions.filter((e) => e !== emotion)
-        : [...prev.emotions, emotion],
     }));
   }
 
@@ -327,14 +314,6 @@ export default function JournalEntryForm() {
             className={INPUT_CLASS}
           />
         </div>
-
-        {/* Emotions */}
-        <EmotionTags
-          selected={entry.emotions}
-          onToggle={toggleEmotion}
-          freeText={entry.emotionFreeText}
-          onFreeTextChange={(v) => updateField("emotionFreeText", v)}
-        />
       </section>
 
       {/* ===== Submit ===== */}
