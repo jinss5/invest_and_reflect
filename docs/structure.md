@@ -19,14 +19,18 @@ app/
   types/
     journal.ts                  # shared types: JournalEntry, ActionDetail, NewsItem, SaveJournalRequest, JournalApiResponse
   components/
+    AppNav.tsx                  # shared top nav — logo link, ListButton, CalendarButton, sign-out button
     CalendarButton.tsx          # nav button that displays selected date and opens CalendarPopup
     CalendarPopup.tsx           # month calendar popup for date selection
     FearGreedSlider.tsx         # range slider 0-100 with zone labels
+    ListButton.tsx              # nav button that navigates to /list
     SegmentedControl.tsx        # generic pill-style toggle (Market Sentiment, Confidence, Decision Basis)
   dashboard/
     CLAUDE.md                   # dashboard-specific guidance (form sections, layout)
-    page.tsx                    # dashboard page (/dashboard) — auth-guarded, renders nav + form
+    page.tsx                    # dashboard page (/dashboard) — auth-guarded, wraps AppNav + JournalEntryForm in DateProvider
     JournalEntryForm.tsx        # journal entry form — client component, UI + state only; calls /api/journal via fetch()
+  list/
+    page.tsx                    # list page (/list) — auth-guarded, wraps AppNav in DateProvider (content TBD)
 lib/
   supabase/
     client.ts                   # browser Supabase client (createBrowserClient) — used only for auth state

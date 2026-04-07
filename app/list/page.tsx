@@ -3,9 +3,8 @@
 import { useAuth } from "@/app/context/AuthContext";
 import { DateProvider } from "@/app/context/DateContext";
 import AppNav from "@/app/components/AppNav";
-import JournalEntryForm from "./JournalEntryForm";
 
-export default function DashboardPage() {
+export default function ListPage() {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -24,9 +23,7 @@ export default function DashboardPage() {
     <DateProvider>
       <div className="min-h-screen bg-[#f4f4f5]">
         <AppNav />
-        <main className="pb-16">
-          <JournalEntryForm />
-        </main>
+        <main className="pb-16" />
       </div>
     </DateProvider>
   );
