@@ -10,6 +10,21 @@ Implemented in `app/api/journal/route.ts`. This is the **only** server-side code
 
 ---
 
+### GET `/api/journal` (no params) — List all entries
+
+Returns all journal entries for the authenticated user, ordered by `entry_date` descending.
+
+**Responses**
+
+| Status | Body                             | Meaning          |
+| ------ | -------------------------------- | ---------------- |
+| 200    | `{ entries: JournalListItem[] }` | List of entries  |
+| 401    | `{ error: "Unauthorized" }`      | No valid session |
+
+Each `JournalListItem` contains `entry_date` (string, `YYYY-MM-DD`) and `summary` (string | null).
+
+---
+
 ### GET `/api/journal?date=YYYY-MM-DD`
 
 Fetch the journal entry for a given date.

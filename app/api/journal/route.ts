@@ -11,7 +11,17 @@ export async function GET(request: Request) {
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const date = new URL(request.url).searchParams.get("date");
-  if (!date || !DATE_RE.test(date)) {
+
+  if (!date) {
+    const { data: rows } = await supabase
+      .from("journal_entries")
+      .select("entry_date, summary")
+      .eq("user_id", user.id)
+      .order("entry_date", { ascending: false });
+    return Response.json({ entries: rows ?? [] });
+  }
+
+  if (!DATE_RE.test(date)) {
     return Response.json({ error: "Invalid date" }, { status: 400 });
   }
 

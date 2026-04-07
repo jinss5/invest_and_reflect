@@ -42,3 +42,8 @@ export interface SaveJournalRequest {
 export interface JournalApiResponse {
   entry: JournalEntry | null;
 }
+
+export interface JournalListItem {
+  entry_date: string;
+  summary: string | null;
+}
