@@ -42,4 +42,4 @@ The dashboard (`/dashboard`) renders a nav bar and a scrollable `JournalEntryFor
 3. **Market** — sentiment segmented control (bullish/neutral/bearish), Fear & Greed slider (0–100), market notes textarea
 4. **Actions** — dynamic add/remove action items, each with: type (buy/sell/hold), ticker, shares, price/unit, confidence level, decision basis; followed by a shared reasoning textarea
 
-The form loads an existing entry when the selected date changes, and saves (upsert) or deletes entries via the Supabase browser client.
+The form loads an existing entry when the selected date changes, and saves (upsert) or deletes entries by calling the `/api/journal` HTTP API. The form has no direct Supabase dependency — all persistence goes through the API layer.

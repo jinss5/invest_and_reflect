@@ -33,3 +33,12 @@ export interface JournalEntry {
   actionDetails: ActionDetail[];
   reasoning: string;
 }
+
+export interface SaveJournalRequest {
+  date: string;
+  entry: JournalEntry;
+}
+
+export interface JournalApiResponse {
+  entry: JournalEntry | null;
+}

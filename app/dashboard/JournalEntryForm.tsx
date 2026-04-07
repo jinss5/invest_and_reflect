@@ -5,8 +5,6 @@ import type { JournalEntry, ActionDetail, NewsItem } from "@/app/types/journal";
 import SegmentedControl from "@/app/components/SegmentedControl";
 import FearGreedSlider from "@/app/components/FearGreedSlider";
 import { useDate } from "@/app/context/DateContext";
-import { useAuth } from "@/app/context/AuthContext";
-import { createClient } from "@/lib/supabase/client";
 
 const INPUT_CLASS =
   "w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-[#0d1117] placeholder:text-[#6b7280]/50 focus:outline-none focus:ring-2 focus:ring-[#0d1117]/20 focus:border-[#0d1117] transition-colors";
@@ -43,7 +41,6 @@ function blankEntry(date: string): JournalEntry {
 
 export default function JournalEntryForm() {
   const { selectedDate, setSelectedDate } = useDate();
-  const { user } = useAuth();
   const [entry, setEntry] = useState<JournalEntry>(() =>
     blankEntry(new Date().toISOString().split("T")[0])
   );
@@ -54,63 +51,20 @@ export default function JournalEntryForm() {
   const [deleteStatus, setDeleteStatus] = useState<"idle" | "deleted" | "error">("idle");
 
   useEffect(() => {
-    if (!user) return;
-
     const fetchEntry = async () => {
       setLoading(true);
-      const supabase = createClient();
-
-      const { data: je } = await supabase
-        .from("journal_entries")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("entry_date", selectedDate)
-        .single();
-
-      if (!je) {
-        setEntry(blankEntry(selectedDate));
+      const res = await fetch(`/api/journal?date=${selectedDate}`);
+      if (!res.ok) {
         setLoading(false);
         return;
       }
-
-      const [{ data: newsRows }, { data: actionRows }] = await Promise.all([
-        supabase.from("entry_news_items").select("*").eq("entry_id", je.id).order("sort_order"),
-        supabase.from("entry_actions").select("*").eq("entry_id", je.id).order("sort_order"),
-      ]);
-
-      setEntry({
-        date: je.entry_date,
-        summary: je.summary ?? "",
-        myInterpretation: je.my_interpretation ?? "",
-        marketSentiment: je.market_sentiment ?? "neutral",
-        fearGreedIndex: je.fear_greed_index ?? 50,
-        marketNotes: je.market_notes ?? "",
-        reasoning: je.reasoning ?? "",
-        newsItems: newsRows?.length
-          ? newsRows.map((n) => ({
-              id: crypto.randomUUID(),
-              keyNews: n.key_news ?? "",
-              marketReactionSummary: n.market_reaction_summary ?? "",
-            }))
-          : [createNewsItem()],
-        actionDetails: actionRows?.length
-          ? actionRows.map((a) => ({
-              id: crypto.randomUUID(),
-              type: a.action_type,
-              ticker: a.ticker ?? "",
-              shares: a.shares?.toString() ?? "",
-              pricePerUnit: a.price_per_unit?.toString() ?? "",
-              confidenceLevel: a.confidence_level ?? "medium",
-              decisionBasis: a.decision_basis ?? "mixed",
-            }))
-          : [createActionDetail()],
-      });
-
+      const { entry: fetched } = await res.json();
+      setEntry(fetched ?? blankEntry(selectedDate));
       setLoading(false);
     };
 
     fetchEntry();
-  }, [selectedDate, user]);
+  }, [selectedDate]);
 
   function updateField<K extends keyof JournalEntry>(key: K, value: JournalEntry[K]) {
     if (key === "date" && typeof value === "string") {
@@ -170,74 +124,16 @@ export default function JournalEntryForm() {
   }
 
   async function handleSave() {
-    if (!user) return;
-
     setSaving(true);
     setSaveStatus("idle");
 
     try {
-      const supabase = createClient();
-
-      // Ensure user exists in public.users
-      await supabase.from("users").upsert({ id: user.id, email: user.email }, { onConflict: "id" });
-
-      // Upsert journal entry (unique on user_id + entry_date)
-      const { data: entryRow, error: entryError } = await supabase
-        .from("journal_entries")
-        .upsert(
-          {
-            user_id: user.id,
-            entry_date: selectedDate,
-            summary: entry.summary,
-            my_interpretation: entry.myInterpretation,
-            market_sentiment: entry.marketSentiment,
-            fear_greed_index: entry.fearGreedIndex,
-            market_notes: entry.marketNotes,
-            reasoning: entry.reasoning,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: "user_id,entry_date" }
-        )
-        .select("id")
-        .single();
-
-      if (entryError) throw entryError;
-
-      const entryId = entryRow.id;
-
-      // Replace news items: delete old, insert new
-      await supabase.from("entry_news_items").delete().eq("entry_id", entryId);
-
-      if (entry.newsItems.length > 0) {
-        const { error: newsError } = await supabase.from("entry_news_items").insert(
-          entry.newsItems.map((item, i) => ({
-            entry_id: entryId,
-            key_news: item.keyNews,
-            market_reaction_summary: item.marketReactionSummary,
-            sort_order: i,
-          }))
-        );
-        if (newsError) throw newsError;
-      }
-
-      // Replace actions: delete old, insert new
-      await supabase.from("entry_actions").delete().eq("entry_id", entryId);
-
-      if (entry.actionDetails.length > 0) {
-        const { error: actionsError } = await supabase.from("entry_actions").insert(
-          entry.actionDetails.map((d, i) => ({
-            entry_id: entryId,
-            action_type: d.type,
-            ticker: d.ticker,
-            shares: d.shares ? parseFloat(d.shares) : null,
-            price_per_unit: d.pricePerUnit ? parseFloat(d.pricePerUnit) : null,
-            confidence_level: d.confidenceLevel,
-            decision_basis: d.decisionBasis,
-            sort_order: i,
-          }))
-        );
-        if (actionsError) throw actionsError;
-      }
+      const res = await fetch("/api/journal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: selectedDate, entry }),
+      });
+      if (!res.ok) throw new Error(await res.text());
 
       setSaveStatus("saved");
       setTimeout(() => setSaveStatus("idle"), 2000);
@@ -251,27 +147,14 @@ export default function JournalEntryForm() {
   }
 
   async function handleDelete() {
-    if (!user) return;
     if (!confirm("Delete this entry? This cannot be undone.")) return;
 
     setDeleting(true);
     setDeleteStatus("idle");
 
     try {
-      const supabase = createClient();
-
-      const { data: je } = await supabase
-        .from("journal_entries")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("entry_date", selectedDate)
-        .single();
-
-      if (je) {
-        await supabase.from("entry_news_items").delete().eq("entry_id", je.id);
-        await supabase.from("entry_actions").delete().eq("entry_id", je.id);
-        await supabase.from("journal_entries").delete().eq("id", je.id);
-      }
+      const res = await fetch(`/api/journal?date=${selectedDate}`, { method: "DELETE" });
+      if (!res.ok) throw new Error(await res.text());
 
       setEntry(blankEntry(selectedDate));
       setDeleteStatus("deleted");
