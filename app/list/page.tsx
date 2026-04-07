@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
 import { DateProvider } from "@/app/context/DateContext";
 import AppNav from "@/app/components/AppNav";
@@ -16,6 +17,7 @@ function formatDate(dateStr: string) {
 }
 
 function JournalList() {
+  const router = useRouter();
   const [entries, setEntries] = useState<JournalListItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -58,7 +60,8 @@ function JournalList() {
         {entries.map((entry) => (
           <div
             key={entry.entry_date}
-            className="grid grid-cols-[120px_1fr] px-5 py-4 items-baseline"
+            onClick={() => router.push(`/dashboard?date=${entry.entry_date}`)}
+            className="grid grid-cols-[120px_1fr] px-5 py-4 items-baseline cursor-pointer hover:bg-gray-50 transition-colors"
           >
             <span className="text-sm font-medium text-[#0d1117]">
               {formatDate(entry.entry_date)}
@@ -92,7 +95,7 @@ export default function ListPage() {
         <AppNav />
         <main className="pb-16">
           <div className="max-w-2xl mx-auto px-6 py-8">
-            <h1 className="text-xl font-semibold text-[#0d1117] mb-6">Journal Entries</h1>
+            <h1 className="text-xl font-semibold text-[#0d1117] mb-6">History</h1>
             <JournalList />
           </div>
         </main>

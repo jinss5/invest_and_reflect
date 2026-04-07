@@ -12,8 +12,16 @@ const DateContext = createContext<DateContextType>({
   setSelectedDate: () => {},
 });
 
-export function DateProvider({ children }: { children: ReactNode }) {
-  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split("T")[0]);
+export function DateProvider({
+  children,
+  initialDate,
+}: {
+  children: ReactNode;
+  initialDate?: string;
+}) {
+  const [selectedDate, setSelectedDate] = useState(
+    () => initialDate ?? new Date().toISOString().split("T")[0]
+  );
 
   return <DateContext value={{ selectedDate, setSelectedDate }}>{children}</DateContext>;
 }
