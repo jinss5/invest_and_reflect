@@ -28,7 +28,7 @@ function DashboardContent() {
   }
 
   return (
-    <DateProvider initialDate={initialDate}>
+    <DateProvider key={initialDate ?? "today"} initialDate={initialDate}>
       <div className="min-h-screen bg-[#f4f4f5]">
         <AppNav />
         <main className="pb-16">

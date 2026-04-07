@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useDate } from "@/app/context/DateContext";
 import CalendarPopup from "./CalendarPopup";
 
 export default function CalendarButton() {
-  const { selectedDate, setSelectedDate } = useDate();
+  const router = useRouter();
+  const { selectedDate } = useDate();
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -40,7 +42,7 @@ export default function CalendarButton() {
           <CalendarPopup
             selectedDate={selectedDate}
             onSelectDate={(date) => {
-              setSelectedDate(date);
+              router.push(`/dashboard?date=${date}`);
               setIsOpen(false);
             }}
             onClose={() => setIsOpen(false)}
