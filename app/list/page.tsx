@@ -20,17 +20,15 @@ function JournalList() {
   const router = useRouter();
   const [entries, setEntries] = useState<JournalListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     fetch("/api/journal")
-      .then((res) => {
-        console.log("list response status:", res.status);
-        return res.json();
-      })
+      .then((res) => res.json())
       .then((data) => {
-        console.log("list response data:", data);
         setEntries(data.entries ?? []);
       })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -38,6 +36,14 @@ function JournalList() {
     return (
       <div className="flex justify-center py-16">
         <p className="text-sm text-[#6b7280]">Loading entries…</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-2xl bg-white p-10 shadow-sm text-center">
+        <p className="text-[#6b7280] text-sm">Failed to load entries. Please try again.</p>
       </div>
     );
   }

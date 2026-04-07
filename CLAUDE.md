@@ -28,6 +28,14 @@ Update in this order: `app/types/journal.ts` → `app/api/journal/route.ts` → 
 
 If a task seems to require data deletion, stop and ask the user to run the command themselves.
 
+## Production code standards
+
+The app is live with real users. Write accordingly:
+
+- **No `console.log`** — never leave debug logging in production code. `console.error` is acceptable only for genuine error paths.
+- **Handle errors explicitly** — every `fetch` must have a `.catch()` or `try/catch`. Failed operations must surface a message to the user, not silently fail or spin forever.
+- **Test the happy path and the failure path** — before considering a change done, think through what happens when the API is down, the user is unauthenticated, or the data is empty.
+
 ## Commands
 
 ```bash
