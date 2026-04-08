@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import type { JournalEntry, ActionDetail, NewsItem } from "@/app/types/journal";
 import SegmentedControl from "@/app/components/SegmentedControl";
 import FearGreedSlider from "@/app/components/FearGreedSlider";
@@ -40,6 +41,7 @@ function blankEntry(date: string): JournalEntry {
 }
 
 export default function JournalEntryForm() {
+  const router = useRouter();
   const { selectedDate, setSelectedDate } = useDate();
   const [entry, setEntry] = useState<JournalEntry>(() =>
     blankEntry(new Date().toISOString().split("T")[0])
@@ -178,7 +180,7 @@ export default function JournalEntryForm() {
           <input
             type="date"
             value={selectedDate}
-            onChange={(e) => updateField("date", e.target.value)}
+            onChange={(e) => router.push(`/dashboard?date=${e.target.value}`)}
             className={INPUT_CLASS}
           />
         </div>
