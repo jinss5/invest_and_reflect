@@ -22,13 +22,19 @@ app/
     AppNav.tsx                  # shared top nav — logo link, ListButton, CalendarButton, sign-out button
     CalendarButton.tsx          # nav button that displays selected date and opens CalendarPopup
     CalendarPopup.tsx           # month calendar popup for date selection
-    FearGreedSlider.tsx         # range slider 0-100 with zone labels
+    FearGreedSlider.tsx         # range slider 0-100 with zone labels; exports getZone() helper
     ListButton.tsx              # nav button that navigates to /list
     SegmentedControl.tsx        # generic pill-style toggle (Market Sentiment, Confidence, Decision Basis)
   dashboard/
     CLAUDE.md                   # dashboard-specific guidance (form sections, layout)
     page.tsx                    # dashboard page (/dashboard) — auth-guarded, wraps AppNav + JournalEntryForm in DateProvider
-    JournalEntryForm.tsx        # journal entry form — client component, UI + state only; calls /api/journal via fetch()
+    JournalEntryForm.tsx        # journal entry orchestrator — manages mode (view/edit/create), state, and API calls; renders section components
+    components.tsx              # shared dashboard UI primitives — INPUT_CLASS, TextValue, Badge, SectionCard
+    sections/
+      BasicInfoSection.tsx      # date + summary — view mode shows formatted date & text, edit mode shows inputs
+      NewsSection.tsx           # news items list + interpretation — view/edit dual-mode
+      MarketSection.tsx         # sentiment, fear/greed index, notes — view/edit dual-mode
+      ActionsSection.tsx        # action items list + reasoning — view/edit dual-mode with ActionCardView/ActionCardEdit
   list/
     page.tsx                    # list page (/list) — auth-guarded, wraps AppNav in DateProvider (content TBD)
 lib/

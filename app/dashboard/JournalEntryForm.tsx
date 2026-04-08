@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef, useCallback } from "react";
 import type { JournalEntry, ActionDetail, NewsItem } from "@/app/types/journal";
-import SegmentedControl from "@/app/components/SegmentedControl";
-import FearGreedSlider from "@/app/components/FearGreedSlider";
 import { useDate } from "@/app/context/DateContext";
+import BasicInfoSection from "./sections/BasicInfoSection";
+import NewsSection from "./sections/NewsSection";
+import MarketSection from "./sections/MarketSection";
+import ActionsSection from "./sections/ActionsSection";
 
-const INPUT_CLASS =
-  "w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-[#0d1117] placeholder:text-[#6b7280]/50 focus:outline-none focus:ring-2 focus:ring-[#0d1117]/20 focus:border-[#0d1117] transition-colors";
+type Mode = "view" | "edit" | "create";
 
 function createNewsItem(): NewsItem {
   return { id: crypto.randomUUID(), keyNews: "", marketReactionSummary: "" };
@@ -41,55 +41,73 @@ function blankEntry(date: string): JournalEntry {
 }
 
 export default function JournalEntryForm() {
-  const router = useRouter();
-  const { selectedDate, setSelectedDate } = useDate();
+  const { selectedDate } = useDate();
   const [entry, setEntry] = useState<JournalEntry>(() =>
     blankEntry(new Date().toISOString().split("T")[0])
   );
+  const [mode, setMode] = useState<Mode>("create");
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved" | "error">("idle");
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteStatus, setDeleteStatus] = useState<"idle" | "deleted" | "error">("idle");
+  const snapshotRef = useRef<JournalEntry | null>(null);
 
-  useEffect(() => {
-    const fetchEntry = async () => {
-      setLoading(true);
-      const res = await fetch(`/api/journal?date=${selectedDate}`);
+  const fetchEntry = useCallback(async (date: string) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/journal?date=${date}`);
       if (!res.ok) {
         setLoading(false);
         return;
       }
       const { entry: fetched } = await res.json();
-      setEntry(fetched ?? blankEntry(selectedDate));
+      if (fetched) {
+        setEntry(fetched);
+        setMode("view");
+      } else {
+        setEntry(blankEntry(date));
+        setMode("create");
+      }
+    } catch {
+      setEntry(blankEntry(date));
+      setMode("create");
+    } finally {
       setLoading(false);
-    };
-
-    fetchEntry();
-  }, [selectedDate]);
-
-  function updateField<K extends keyof JournalEntry>(key: K, value: JournalEntry[K]) {
-    if (key === "date" && typeof value === "string") {
-      setSelectedDate(value);
     }
+  }, []);
+
+  useEffect(() => {
+    fetchEntry(selectedDate);
+  }, [selectedDate, fetchEntry]);
+
+  // --- Mode transitions ---
+  function handleEdit() {
+    snapshotRef.current = structuredClone(entry);
+    setMode("edit");
+  }
+
+  function handleCancel() {
+    if (snapshotRef.current) {
+      setEntry(snapshotRef.current);
+      snapshotRef.current = null;
+    }
+    setSaveStatus("idle");
+    setDeleteStatus("idle");
+    setMode("view");
+  }
+
+  // --- Field updaters ---
+  function updateField<K extends keyof JournalEntry>(key: K, value: JournalEntry[K]) {
     setEntry((prev) => ({ ...prev, [key]: value }));
   }
 
-  // --- News helpers ---
   function addNewsItem() {
-    setEntry((prev) => ({
-      ...prev,
-      newsItems: [...prev.newsItems, createNewsItem()],
-    }));
+    setEntry((prev) => ({ ...prev, newsItems: [...prev.newsItems, createNewsItem()] }));
   }
-
   function removeNewsItem(id: string) {
-    setEntry((prev) => ({
-      ...prev,
-      newsItems: prev.newsItems.filter((item) => item.id !== id),
-    }));
+    setEntry((prev) => ({ ...prev, newsItems: prev.newsItems.filter((item) => item.id !== id) }));
   }
-
   function updateNewsItem(id: string, field: keyof NewsItem, value: string) {
     setEntry((prev) => ({
       ...prev,
@@ -99,21 +117,12 @@ export default function JournalEntryForm() {
     }));
   }
 
-  // --- Action helpers ---
   function addActionDetail() {
-    setEntry((prev) => ({
-      ...prev,
-      actionDetails: [...prev.actionDetails, createActionDetail()],
-    }));
+    setEntry((prev) => ({ ...prev, actionDetails: [...prev.actionDetails, createActionDetail()] }));
   }
-
   function removeActionDetail(id: string) {
-    setEntry((prev) => ({
-      ...prev,
-      actionDetails: prev.actionDetails.filter((d) => d.id !== id),
-    }));
+    setEntry((prev) => ({ ...prev, actionDetails: prev.actionDetails.filter((d) => d.id !== id) }));
   }
-
   function updateActionDetail(
     id: string,
     field: "type" | "ticker" | "shares" | "pricePerUnit" | "confidenceLevel" | "decisionBasis",
@@ -125,10 +134,10 @@ export default function JournalEntryForm() {
     }));
   }
 
+  // --- API actions ---
   async function handleSave() {
     setSaving(true);
     setSaveStatus("idle");
-
     try {
       const res = await fetch("/api/journal", {
         method: "POST",
@@ -136,12 +145,11 @@ export default function JournalEntryForm() {
         body: JSON.stringify({ date: selectedDate, entry }),
       });
       if (!res.ok) throw new Error(await res.text());
-
+      snapshotRef.current = null;
       setSaveStatus("saved");
+      setMode("view");
       setTimeout(() => setSaveStatus("idle"), 2000);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : JSON.stringify(err);
-      console.error("Save failed:", msg);
+    } catch {
       setSaveStatus("error");
     } finally {
       setSaving(false);
@@ -150,273 +158,134 @@ export default function JournalEntryForm() {
 
   async function handleDelete() {
     if (!confirm("Delete this entry? This cannot be undone.")) return;
-
     setDeleting(true);
     setDeleteStatus("idle");
-
     try {
       const res = await fetch(`/api/journal?date=${selectedDate}`, { method: "DELETE" });
       if (!res.ok) throw new Error(await res.text());
-
+      snapshotRef.current = null;
       setEntry(blankEntry(selectedDate));
+      setMode("create");
       setDeleteStatus("deleted");
       setTimeout(() => setDeleteStatus("idle"), 2000);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : JSON.stringify(err);
-      console.error("Delete failed:", msg);
+    } catch {
       setDeleteStatus("error");
     } finally {
       setDeleting(false);
     }
   }
 
+  // --- Loading state ---
+  if (loading) {
+    return (
+      <div className="max-w-2xl mx-auto px-6 py-8">
+        <div className="flex items-center justify-center py-20">
+          <div className="w-5 h-5 border-2 border-[#0d1117] border-t-transparent rounded-full animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
+  // --- Render ---
+  const isView = mode === "view";
+  const Wrapper = isView ? "div" : "form";
+
   return (
-    <form onSubmit={(e) => e.preventDefault()} className="max-w-2xl mx-auto px-6 py-8 space-y-6">
-      {/* ===== Basic Info ===== */}
-      <section className="bg-white rounded-2xl p-6 shadow-sm space-y-4">
-        <h2 className="text-lg font-semibold text-[#0d1117]">Basic Info</h2>
-        <div>
-          <label className="block text-sm font-medium text-[#0d1117] mb-1">Date</label>
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => router.push(`/dashboard?date=${e.target.value}`)}
-            className={INPUT_CLASS}
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-[#0d1117] mb-1">One-Line Summary</label>
-          <input
-            type="text"
-            value={entry.summary}
-            onChange={(e) => updateField("summary", e.target.value)}
-            placeholder="e.g., Sold NVDA on earnings miss fear"
-            className={INPUT_CLASS}
-          />
-        </div>
-      </section>
+    <Wrapper
+      {...(!isView && { onSubmit: (e: React.FormEvent) => e.preventDefault() })}
+      className="max-w-2xl mx-auto px-6 py-8 space-y-6"
+    >
+      <BasicInfoSection
+        mode={mode}
+        selectedDate={selectedDate}
+        summary={entry.summary}
+        onSummaryChange={(v) => updateField("summary", v)}
+      />
 
-      {/* ===== News ===== */}
-      <section className="bg-white rounded-2xl p-6 shadow-sm space-y-4">
-        <h2 className="text-lg font-semibold text-[#0d1117]">News</h2>
+      <NewsSection
+        mode={mode}
+        newsItems={entry.newsItems}
+        myInterpretation={entry.myInterpretation}
+        onAdd={addNewsItem}
+        onRemove={removeNewsItem}
+        onUpdate={updateNewsItem}
+        onInterpretationChange={(v) => updateField("myInterpretation", v)}
+      />
 
-        {entry.newsItems.map((item, index) => (
-          <div key={item.id} className="space-y-3 border border-gray-100 rounded-xl p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-[#6b7280]">News #{index + 1}</span>
-              {entry.newsItems.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeNewsItem(item.id)}
-                  className="text-xs text-red-400 hover:text-red-600 transition-colors"
-                >
-                  Remove
-                </button>
-              )}
-            </div>
-            <input
-              type="text"
-              value={item.keyNews}
-              onChange={(e) => updateNewsItem(item.id, "keyNews", e.target.value)}
-              placeholder="Key news headline"
-              className={INPUT_CLASS}
-            />
-            <input
-              type="text"
-              value={item.marketReactionSummary}
-              onChange={(e) => updateNewsItem(item.id, "marketReactionSummary", e.target.value)}
-              placeholder="How did the market react?"
-              className={INPUT_CLASS}
-            />
-          </div>
-        ))}
+      <MarketSection
+        mode={mode}
+        marketSentiment={entry.marketSentiment}
+        fearGreedIndex={entry.fearGreedIndex}
+        marketNotes={entry.marketNotes}
+        onSentimentChange={(v) => updateField("marketSentiment", v)}
+        onFearGreedChange={(v) => updateField("fearGreedIndex", v)}
+        onNotesChange={(v) => updateField("marketNotes", v)}
+      />
 
-        <button
-          type="button"
-          onClick={addNewsItem}
-          className="text-xs font-medium text-[#6b7280] hover:text-[#0d1117] transition-colors"
-        >
-          + Add News
-        </button>
+      <ActionsSection
+        mode={mode}
+        actionDetails={entry.actionDetails}
+        reasoning={entry.reasoning}
+        onAdd={addActionDetail}
+        onRemove={removeActionDetail}
+        onUpdate={updateActionDetail}
+        onReasoningChange={(v) => updateField("reasoning", v)}
+      />
 
-        <div>
-          <label className="block text-sm font-medium text-[#0d1117] mb-1">My Interpretation</label>
-          <textarea
-            value={entry.myInterpretation}
-            onChange={(e) => updateField("myInterpretation", e.target.value)}
-            placeholder="What do I think these news events mean for the market?"
-            rows={3}
-            className={INPUT_CLASS}
-          />
-        </div>
-      </section>
-
-      {/* ===== Market ===== */}
-      <section className="bg-white rounded-2xl p-6 shadow-sm space-y-5">
-        <h2 className="text-lg font-semibold text-[#0d1117]">Market</h2>
-
-        <SegmentedControl
-          label="Market Sentiment"
-          options={[
-            { value: "bearish" as const, label: "Bearish" },
-            { value: "neutral" as const, label: "Neutral" },
-            { value: "bullish" as const, label: "Bullish" },
-          ]}
-          value={entry.marketSentiment}
-          onChange={(v) => updateField("marketSentiment", v)}
-        />
-
-        <FearGreedSlider
-          value={entry.fearGreedIndex}
-          onChange={(v) => updateField("fearGreedIndex", v)}
-        />
-
-        <div>
-          <label className="block text-sm font-medium text-[#0d1117] mb-1">Market Notes</label>
-          <textarea
-            value={entry.marketNotes}
-            onChange={(e) => updateField("marketNotes", e.target.value)}
-            placeholder="Stock movements, price changes, portfolio observations…"
-            rows={3}
-            className={INPUT_CLASS}
-          />
-        </div>
-      </section>
-
-      {/* ===== Actions ===== */}
-      <section className="bg-white rounded-2xl p-6 shadow-sm space-y-5">
-        <h2 className="text-lg font-semibold text-[#0d1117]">Actions</h2>
-
-        {entry.actionDetails.map((detail, index) => (
-          <div key={detail.id} className="space-y-3 border border-gray-100 rounded-xl p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-[#6b7280]">Action #{index + 1}</span>
-              {entry.actionDetails.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeActionDetail(detail.id)}
-                  className="text-xs text-red-400 hover:text-red-600 transition-colors"
-                >
-                  Remove
-                </button>
-              )}
-            </div>
-            <select
-              value={detail.type}
-              onChange={(e) => updateActionDetail(detail.id, "type", e.target.value)}
-              className={INPUT_CLASS}
-            >
-              <option value="buy">Buy</option>
-              <option value="sell">Sell</option>
-              <option value="hold">Hold</option>
-            </select>
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <label className="block text-xs text-[#6b7280] mb-1">Ticker</label>
-                <input
-                  type="text"
-                  value={detail.ticker}
-                  onChange={(e) => updateActionDetail(detail.id, "ticker", e.target.value)}
-                  placeholder="e.g., AAPL"
-                  className={INPUT_CLASS}
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-[#6b7280] mb-1">Shares</label>
-                <input
-                  type="text"
-                  value={detail.shares}
-                  onChange={(e) => updateActionDetail(detail.id, "shares", e.target.value)}
-                  placeholder="0"
-                  className={INPUT_CLASS}
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-[#6b7280] mb-1">Price / Unit</label>
-                <input
-                  type="text"
-                  value={detail.pricePerUnit}
-                  onChange={(e) => updateActionDetail(detail.id, "pricePerUnit", e.target.value)}
-                  placeholder="0.00"
-                  className={INPUT_CLASS}
-                />
-              </div>
-            </div>
-            <SegmentedControl
-              label="Confidence Level"
-              options={[
-                { value: "low" as const, label: "Low" },
-                { value: "medium" as const, label: "Medium" },
-                { value: "high" as const, label: "High" },
-              ]}
-              value={detail.confidenceLevel}
-              onChange={(v) => updateActionDetail(detail.id, "confidenceLevel", v)}
-            />
-            <SegmentedControl
-              label="Decision Basis"
-              options={[
-                { value: "logic" as const, label: "Logic-Based" },
-                { value: "intuition" as const, label: "Intuition-Based" },
-                { value: "mixed" as const, label: "Mixed" },
-              ]}
-              value={detail.decisionBasis}
-              onChange={(v) => updateActionDetail(detail.id, "decisionBasis", v)}
-            />
-          </div>
-        ))}
-
-        <button
-          type="button"
-          onClick={addActionDetail}
-          className="text-xs font-medium text-[#6b7280] hover:text-[#0d1117] transition-colors"
-        >
-          + Add Action
-        </button>
-
-        {/* Reasoning */}
-        <div>
-          <label className="block text-sm font-medium text-[#0d1117] mb-1">
-            Reasoning Behind Actions
-          </label>
-          <textarea
-            value={entry.reasoning}
-            onChange={(e) => updateField("reasoning", e.target.value)}
-            placeholder="Why did I take these actions today?"
-            rows={3}
-            className={INPUT_CLASS}
-          />
-        </div>
-      </section>
-
-      {/* ===== Submit ===== */}
+      {/* ===== Bottom Actions ===== */}
       <div className="flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={handleDelete}
-            disabled={deleting || saving || loading}
-            className="px-6 py-2.5 rounded-full border border-red-300 text-red-500 text-sm font-medium transition-colors hover:bg-red-50 hover:border-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {deleting ? "Deleting…" : "Delete"}
-          </button>
-          {deleteStatus === "deleted" && <span className="text-sm text-green-600">Deleted!</span>}
-          {deleteStatus === "error" && (
-            <span className="text-sm text-red-500">Failed to delete</span>
-          )}
-        </div>
+        {mode === "edit" ? (
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={deleting || saving}
+              className="px-6 py-2.5 rounded-full border border-red-300 text-red-500 text-sm font-medium transition-colors hover:bg-red-50 hover:border-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {deleting ? "Deleting…" : "Delete"}
+            </button>
+            {deleteStatus === "deleted" && <span className="text-sm text-green-600">Deleted!</span>}
+            {deleteStatus === "error" && (
+              <span className="text-sm text-red-500">Failed to delete</span>
+            )}
+          </div>
+        ) : (
+          <div />
+        )}
         <div className="flex items-center gap-3">
           {saveStatus === "saved" && <span className="text-sm text-green-600">Saved!</span>}
           {saveStatus === "error" && <span className="text-sm text-red-500">Failed to save</span>}
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving || loading}
-            className="px-6 py-2.5 rounded-full bg-[#0d1117] text-white text-sm font-medium transition-opacity hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {saving ? "Saving…" : "Save"}
-          </button>
+          {isView ? (
+            <button
+              type="button"
+              onClick={handleEdit}
+              className="px-6 py-2.5 rounded-full bg-[#0d1117] text-white text-sm font-medium transition-opacity hover:opacity-80"
+            >
+              Edit
+            </button>
+          ) : (
+            <>
+              {mode === "edit" && (
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  className="px-6 py-2.5 rounded-full border border-gray-200 text-sm font-medium text-[#6b7280] hover:text-[#0d1117] transition-colors"
+                >
+                  Cancel
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={saving}
+                className="px-6 py-2.5 rounded-full bg-[#0d1117] text-white text-sm font-medium transition-opacity hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {saving ? "Saving…" : "Save"}
+              </button>
+            </>
+          )}
         </div>
       </div>
-    </form>
+    </Wrapper>
   );
 }

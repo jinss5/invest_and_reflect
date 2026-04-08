@@ -5,7 +5,7 @@ interface FearGreedSliderProps {
   onChange: (value: number) => void;
 }
 
-function getZone(value: number): { label: string; color: string } {
+export function getZone(value: number): { label: string; color: string } {
   if (value <= 25) return { label: "Extreme Fear", color: "text-red-600" };
   else if (value <= 45) return { label: "Fear", color: "text-orange-500" };
   else if (value <= 55) return { label: "Neutral", color: "text-[#6b7280]" };
