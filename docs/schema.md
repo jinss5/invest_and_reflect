@@ -2,7 +2,13 @@
 
 > Reference only — do not execute.
 
+## Row Level Security
+
+RLS is enabled on all tables in `public`. When adding a new table, always enable RLS and add policies before shipping.
+
 ## `public.users`
+
+RLS enabled. Policies: `users_insert_own`, `users_update_own` (both scoped to `auth.uid() = id`). No SELECT or DELETE policies.
 
 | column         | type        | notes                     |
 | -------------- | ----------- | ------------------------- |
