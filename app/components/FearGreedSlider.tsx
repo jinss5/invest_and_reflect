@@ -6,11 +6,11 @@ interface FearGreedSliderProps {
 }
 
 function getZone(value: number): { label: string; color: string } {
-  if (value <= 20) return { label: "Extreme Fear", color: "text-red-600" };
-  if (value <= 40) return { label: "Fear", color: "text-orange-500" };
-  if (value <= 60) return { label: "Neutral", color: "text-[#6b7280]" };
-  if (value <= 80) return { label: "Greed", color: "text-emerald-500" };
-  return { label: "Extreme Greed", color: "text-green-600" };
+  if (value <= 25) return { label: "Extreme Fear", color: "text-red-600" };
+  else if (value <= 45) return { label: "Fear", color: "text-orange-500" };
+  else if (value <= 55) return { label: "Neutral", color: "text-[#6b7280]" };
+  else if (value < 75) return { label: "Greed", color: "text-emerald-500" };
+  else return { label: "Extreme Greed", color: "text-green-600" };
 }
 
 export default function FearGreedSlider({ value, onChange }: FearGreedSliderProps) {
@@ -18,7 +18,32 @@ export default function FearGreedSlider({ value, onChange }: FearGreedSliderProp
 
   return (
     <fieldset>
-      <legend className="text-sm font-medium text-[#0d1117] mb-2">Fear & Greed Index</legend>
+      <legend className="flex items-center gap-1.5 text-sm font-medium text-[#0d1117] mb-2">
+        Fear & Greed Index
+        <a
+          href="https://www.cnn.com/markets/fear-and-greed"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[#6b7280] hover:text-[#0d1117] transition-colors"
+          aria-label="View CNN Fear & Greed Index"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+            <polyline points="15 3 21 3 21 9" />
+            <line x1="10" y1="14" x2="21" y2="3" />
+          </svg>
+        </a>
+      </legend>
       <input
         type="range"
         min={0}
