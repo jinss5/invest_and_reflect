@@ -8,15 +8,19 @@ RLS is enabled on all tables in `public`. When adding a new table, always enable
 
 ## `public.users`
 
-RLS enabled. Policies: `users_insert_own`, `users_update_own` (both scoped to `auth.uid() = id`). No SELECT or DELETE policies.
+RLS enabled. Policies: `users_insert_own`, `users_update_own`, `users_select_own` (all scoped to `auth.uid() = id`). No DELETE policy.
 
-| column         | type        | notes                     |
-| -------------- | ----------- | ------------------------- |
-| `id`           | uuid        | PK, FK → `auth.users(id)` |
-| `email`        | text        | unique                    |
-| `display_name` | text        |                           |
-| `created_at`   | timestamptz |                           |
-| `updated_at`   | timestamptz |                           |
+| column               | type        | notes                     |
+| -------------------- | ----------- | ------------------------- |
+| `id`                 | uuid        | PK, FK → `auth.users(id)` |
+| `email`              | text        | unique                    |
+| `display_name`       | text        |                           |
+| `email_enabled`      | boolean     | default `false`           |
+| `one_week_reminder`  | boolean     | default `false`           |
+| `one_month_reminder` | boolean     | default `false`           |
+| `one_year_reminder`  | boolean     | default `false`           |
+| `created_at`         | timestamptz |                           |
+| `updated_at`         | timestamptz |                           |
 
 ## `public.journal_entries`
 

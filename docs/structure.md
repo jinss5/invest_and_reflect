@@ -13,17 +13,22 @@ app/
   api/
     journal/
       route.ts                  # API route handlers (GET, POST, DELETE) — ONLY code that touches Supabase for journal data
+    notifications/
+      route.ts                  # API route handlers (GET, PUT) — read/write notification preferences on public.users
   context/
     AuthContext.tsx             # AuthProvider + useAuth hook (user, loading, signOut)
     DateContext.tsx             # DateProvider + useDate hook — selected date shared across nav and form
   types/
     journal.ts                  # shared types: JournalEntry, ActionDetail, NewsItem, SaveJournalRequest, JournalApiResponse
+    notifications.ts            # shared type: NotificationPreferences
   components/
     AppNav.tsx                  # shared top nav — logo link, ListButton, CalendarButton, sign-out button
     CalendarButton.tsx          # nav button that displays selected date and opens CalendarPopup
     CalendarPopup.tsx           # month calendar popup for date selection
     FearGreedSlider.tsx         # range slider 0-100 with zone labels; exports getZone() helper
     ListButton.tsx              # nav button that navigates to /list
+    ProfileButton.tsx            # avatar button with dropdown menu (Reminders, Log out)
+    RemindersModal.tsx           # notification preferences modal — toggles for email + reminder intervals
     SegmentedControl.tsx        # generic pill-style toggle (Market Sentiment, Confidence, Decision Basis)
   dashboard/
     CLAUDE.md                   # dashboard-specific guidance (form sections, layout)

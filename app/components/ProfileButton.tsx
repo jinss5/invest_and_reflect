@@ -1,11 +1,13 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/app/context/AuthContext";
+import RemindersModal from "@/app/components/RemindersModal";
 
 export default function ProfileButton() {
   const { user, signOut } = useAuth();
   const [open, setOpen] = useState(false);
+  const [remindersOpen, setRemindersOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -17,6 +19,8 @@ export default function ProfileButton() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const handleCloseReminders = useCallback(() => setRemindersOpen(false), []);
 
   const initial = user?.email?.[0]?.toUpperCase() ?? "?";
 
@@ -38,6 +42,15 @@ export default function ProfileButton() {
           <button
             onClick={() => {
               setOpen(false);
+              setRemindersOpen(true);
+            }}
+            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150"
+          >
+            Reminders
+          </button>
+          <button
+            onClick={() => {
+              setOpen(false);
               signOut();
             }}
             className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150"
@@ -46,6 +59,8 @@ export default function ProfileButton() {
           </button>
         </div>
       )}
+
+      {remindersOpen && <RemindersModal onClose={handleCloseReminders} />}
     </div>
   );
 }
