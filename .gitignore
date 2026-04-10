@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Per-directory Claude Code instructions
+app/**/CLAUDE.md

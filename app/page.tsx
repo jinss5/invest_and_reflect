@@ -50,6 +50,16 @@ export default function Page() {
         >
           Start
         </Link>
+
+        <p className="mt-6 text-xs text-[#6b7280]">
+          <Link href="/terms" className="underline hover:text-[#0d1117]">
+            Terms
+          </Link>
+          {" · "}
+          <Link href="/privacy" className="underline hover:text-[#0d1117]">
+            Privacy
+          </Link>
+        </p>
       </div>
     </main>
   );

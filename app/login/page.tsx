@@ -64,6 +64,18 @@ export default function LoginPage() {
           </svg>
           Continue with Google
         </button>
+
+        <p className="mt-4 text-xs text-[#6b7280]">
+          By signing in, you agree to our <br />
+          <a href="/terms" className="underline hover:text-[#0d1117]">
+            Terms
+          </a>{" "}
+          and{" "}
+          <a href="/privacy" className="underline hover:text-[#0d1117]">
+            Privacy Policy
+          </a>
+          .
+        </p>
       </div>
     </main>
   );
