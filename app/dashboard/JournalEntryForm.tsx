@@ -17,7 +17,7 @@ function createNewsItem(): NewsItem {
 function createActionDetail(): ActionDetail {
   return {
     id: crypto.randomUUID(),
-    type: "buy",
+    type: "hold",
     ticker: "",
     shares: "",
     pricePerUnit: "",
