@@ -1,5 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import type { JournalEntry, SaveJournalRequest } from "@/app/types/journal";
+import {
+  DEFAULT_MARKET_SENTIMENT,
+  DEFAULT_FEAR_GREED_INDEX,
+  DEFAULT_CONFIDENCE_LEVEL,
+  DEFAULT_DECISION_BASIS,
+} from "@/app/constants/journal";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -43,8 +49,8 @@ export async function GET(request: Request) {
     date: je.entry_date,
     summary: je.summary ?? "",
     myInterpretation: je.my_interpretation ?? "",
-    marketSentiment: je.market_sentiment ?? "neutral",
-    fearGreedIndex: je.fear_greed_index ?? 50,
+    marketSentiment: je.market_sentiment ?? DEFAULT_MARKET_SENTIMENT,
+    fearGreedIndex: je.fear_greed_index ?? DEFAULT_FEAR_GREED_INDEX,
     marketNotes: je.market_notes ?? "",
     reasoning: je.reasoning ?? "",
     newsItems: newsRows?.length
@@ -61,8 +67,8 @@ export async function GET(request: Request) {
           ticker: a.ticker ?? "",
           shares: a.shares?.toString() ?? "",
           pricePerUnit: a.price_per_unit?.toString() ?? "",
-          confidenceLevel: a.confidence_level ?? "medium",
-          decisionBasis: a.decision_basis ?? "mixed",
+          confidenceLevel: a.confidence_level ?? DEFAULT_CONFIDENCE_LEVEL,
+          decisionBasis: a.decision_basis ?? DEFAULT_DECISION_BASIS,
         }))
       : [],
   };

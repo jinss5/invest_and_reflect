@@ -2,6 +2,13 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import type { JournalEntry, ActionDetail, NewsItem } from "@/app/types/journal";
+import {
+  DEFAULT_MARKET_SENTIMENT,
+  DEFAULT_FEAR_GREED_INDEX,
+  DEFAULT_ACTION_TYPE,
+  DEFAULT_CONFIDENCE_LEVEL,
+  DEFAULT_DECISION_BASIS,
+} from "@/app/constants/journal";
 import { useDate } from "@/app/context/DateContext";
 import BasicInfoSection from "./sections/BasicInfoSection";
 import NewsSection from "./sections/NewsSection";
@@ -17,12 +24,12 @@ function createNewsItem(): NewsItem {
 function createActionDetail(): ActionDetail {
   return {
     id: crypto.randomUUID(),
-    type: "hold",
+    type: DEFAULT_ACTION_TYPE,
     ticker: "",
     shares: "",
     pricePerUnit: "",
-    confidenceLevel: "medium",
-    decisionBasis: "mixed",
+    confidenceLevel: DEFAULT_CONFIDENCE_LEVEL,
+    decisionBasis: DEFAULT_DECISION_BASIS,
   };
 }
 
@@ -32,8 +39,8 @@ function blankEntry(date: string): JournalEntry {
     summary: "",
     newsItems: [createNewsItem()],
     myInterpretation: "",
-    marketSentiment: "neutral",
-    fearGreedIndex: 50,
+    marketSentiment: DEFAULT_MARKET_SENTIMENT,
+    fearGreedIndex: DEFAULT_FEAR_GREED_INDEX,
     marketNotes: "",
     actionDetails: [createActionDetail()],
     reasoning: "",
@@ -190,6 +197,17 @@ export default function JournalEntryForm() {
   const isView = mode === "view";
   const Wrapper = isView ? "div" : "form";
 
+  const hasNewsData =
+    entry.newsItems.some((n) => n.keyNews.trim() || n.marketReactionSummary.trim()) ||
+    entry.myInterpretation.trim();
+  const hasMarketData =
+    entry.marketSentiment !== DEFAULT_MARKET_SENTIMENT ||
+    entry.fearGreedIndex !== DEFAULT_FEAR_GREED_INDEX ||
+    entry.marketNotes.trim();
+  const hasActionsData =
+    entry.actionDetails.some((a) => a.ticker.trim() || a.shares.trim() || a.pricePerUnit.trim()) ||
+    entry.reasoning.trim();
+
   return (
     <Wrapper
       {...(!isView && { onSubmit: (e: React.FormEvent) => e.preventDefault() })}
@@ -202,35 +220,41 @@ export default function JournalEntryForm() {
         onSummaryChange={(v) => updateField("summary", v)}
       />
 
-      <NewsSection
-        mode={mode}
-        newsItems={entry.newsItems}
-        myInterpretation={entry.myInterpretation}
-        onAdd={addNewsItem}
-        onRemove={removeNewsItem}
-        onUpdate={updateNewsItem}
-        onInterpretationChange={(v) => updateField("myInterpretation", v)}
-      />
+      {(!isView || hasNewsData) && (
+        <NewsSection
+          mode={mode}
+          newsItems={entry.newsItems}
+          myInterpretation={entry.myInterpretation}
+          onAdd={addNewsItem}
+          onRemove={removeNewsItem}
+          onUpdate={updateNewsItem}
+          onInterpretationChange={(v) => updateField("myInterpretation", v)}
+        />
+      )}
 
-      <MarketSection
-        mode={mode}
-        marketSentiment={entry.marketSentiment}
-        fearGreedIndex={entry.fearGreedIndex}
-        marketNotes={entry.marketNotes}
-        onSentimentChange={(v) => updateField("marketSentiment", v)}
-        onFearGreedChange={(v) => updateField("fearGreedIndex", v)}
-        onNotesChange={(v) => updateField("marketNotes", v)}
-      />
+      {(!isView || hasMarketData) && (
+        <MarketSection
+          mode={mode}
+          marketSentiment={entry.marketSentiment}
+          fearGreedIndex={entry.fearGreedIndex}
+          marketNotes={entry.marketNotes}
+          onSentimentChange={(v) => updateField("marketSentiment", v)}
+          onFearGreedChange={(v) => updateField("fearGreedIndex", v)}
+          onNotesChange={(v) => updateField("marketNotes", v)}
+        />
+      )}
 
-      <ActionsSection
-        mode={mode}
-        actionDetails={entry.actionDetails}
-        reasoning={entry.reasoning}
-        onAdd={addActionDetail}
-        onRemove={removeActionDetail}
-        onUpdate={updateActionDetail}
-        onReasoningChange={(v) => updateField("reasoning", v)}
-      />
+      {(!isView || hasActionsData) && (
+        <ActionsSection
+          mode={mode}
+          actionDetails={entry.actionDetails}
+          reasoning={entry.reasoning}
+          onAdd={addActionDetail}
+          onRemove={removeActionDetail}
+          onUpdate={updateActionDetail}
+          onReasoningChange={(v) => updateField("reasoning", v)}
+        />
+      )}
 
       {/* ===== Bottom Actions ===== */}
       <div className="flex justify-between items-center">
