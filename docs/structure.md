@@ -47,6 +47,10 @@ app/
       ActionsSection.tsx        # action items list + reasoning — view/edit dual-mode with ActionCardView/ActionCardEdit
   list/
     page.tsx                    # list page (/list) — auth-guarded, wraps AppNav in DateProvider (content TBD)
+  privacy/
+    page.tsx                    # privacy policy page (/privacy)
+  terms/
+    page.tsx                    # terms of service page (/terms)
 lib/
   supabase/
     client.ts                   # browser Supabase client (createBrowserClient) — used only for auth state
